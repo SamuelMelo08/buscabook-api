@@ -3,7 +3,7 @@ from buscabook.models import User
 from buscabook.schemas import RegisterSchema, LoginSchema
 from buscabook.database import get_session
 from sqlalchemy.orm import Session
-from buscabook.main import bcrypt_context, ALGORITHM, SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES
+from buscabook.config import bcrypt_context, ALGORITHM, SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES
 from jose import jwt
 from datetime import datetime, timedelta, timezone 
 
