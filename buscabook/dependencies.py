@@ -8,13 +8,13 @@ from jose import jwt, JWTError
 def verify_token(token: str = Depends(oauth_schema), session: Session = Depends(get_session)):
 
     try:
-        token_content = jwt.decode(token, SECRET_KEY, ALGORITHM)
+        token_content = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = token_content.get("sub")
     
     except JWTError:
         raise HTTPException(status_code=401, detail="Token inválido.")
     
-    user = session.query(User).filter(User.id == user_id).first
+    user = session.query(User).filter(User.id == int(user_id)).first()
 
     if not user:
         raise HTTPException(status_code=404, detail="Usuário não encontrado.")

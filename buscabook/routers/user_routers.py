@@ -104,3 +104,18 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends() , session: Sess
             } 
     
     
+@user_routers.delete("/delete-user/{user_id}")
+async def delete_user(user_id: int, user: User = Depends(verify_token), session: Session = Depends(get_session)):
+    """Rota para deletar um usuário"""
+
+    check_user = session.query(User).filter(User.id == user_id).first()
+
+    if not check_user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+
+    elif check_user.id != user.id:
+        raise HTTPException(status_code=403, detail="Você não tem permissão para realizar esta ação.")
+    else:
+
+        session.delete(check_user)
+        session.commit()
