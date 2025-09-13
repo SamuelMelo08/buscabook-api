@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from buscabook.models import User
 from buscabook.schemas import RegisterSchema, LoginSchema
 from buscabook.database import get_session
+from buscabook.dependencies import verify_token
 from sqlalchemy.orm import Session
 from buscabook.config import bcrypt_context, ALGORITHM, SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES
 from jose import jwt
@@ -12,18 +14,20 @@ user_routers = APIRouter(
     tags=["user"],
 )
 
-def authenticate_user(login_schema: LoginSchema, session : Session = Depends(get_session)):
 
-    user = session.query(User).filter(User.email == login_schema.email).first()
+def authenticate_user(email: str, password: str, session : Session = Depends(get_session)):
+
+    user = session.query(User).filter(User.email == email).first()
 
     if not user:
         return False
 
-    elif not bcrypt_context.verify(login_schema.password, user.password):
+    elif not bcrypt_context.verify(password, user.password):
         return False
     
     else:
         return user
+
 
 def create_token(user_id, duration_token = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)):
 
@@ -39,10 +43,9 @@ def create_token(user_id, duration_token = timedelta(minutes=ACCESS_TOKEN_EXPIRE
     return token
 
 
-
-#Rota para registrar um usuário
 @user_routers.post("/register")
 async def register(register_schema: RegisterSchema, session: Session = Depends(get_session) ):
+    """Rota para registrar um usuário."""
     
     user = session.query(User).filter(User.email == register_schema.email).first()
     
@@ -62,9 +65,30 @@ async def register(register_schema: RegisterSchema, session: Session = Depends(g
 
 
 @user_routers.post("/login")
-async def login(login_schema: LoginSchema, session: Session = Depends(get_session)):
+async def login(login_schema: LoginSchema , session: Session = Depends(get_session)):
+    """Rota para logar com uma conta cadastrada."""
 
-    user = authenticate_user(login_schema, session)
+    user = authenticate_user(login_schema.email , login_schema.password, session)
+
+    if not user:
+        raise HTTPException(status_code=400, detail="Usuário não encontrado ou credencias inválidas")
+
+    else:
+        access_token = create_token(user_id=user.id)
+
+        return {
+
+             "access_token" : access_token,
+             "token_type": "Bearer",
+
+            } 
+
+
+@user_routers.post("/login-form")
+async def login(form_data: OAuth2PasswordRequestForm = Depends() , session: Session = Depends(get_session)):
+    """Rota para logar no swagger."""
+
+    user = authenticate_user(form_data.username, form_data.password, session)
 
     if not user:
         raise HTTPException(status_code=400, detail="Usuário não encontrado ou credencias inválidas")
@@ -79,4 +103,4 @@ async def login(login_schema: LoginSchema, session: Session = Depends(get_sessio
 
             } 
     
-
+    
