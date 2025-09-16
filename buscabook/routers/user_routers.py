@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from buscabook.models import User
-from buscabook.schemas import RegisterSchema, LoginSchema
+from buscabook.schemas import RegisterSchema, LoginSchema, ResponseInfoUser
 from buscabook.database import get_session
 from buscabook.dependencies import verify_token
 from sqlalchemy.orm import Session
@@ -102,7 +102,21 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends() , session: Sess
              "token_type": "Bearer",
 
             } 
+
+@user_routers.get("/info-user/{user_id}", response_model=ResponseInfoUser)
+async def info_user(user_id: int, user: User = Depends(verify_token) ,session: Session = Depends(get_session)):
+
+    check_user = session.query(User).filter(User.id == user_id).first()
+
+    if not check_user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
     
+    elif check_user.id != user.id:
+        raise HTTPException(status_code=403, detail="Você não tem permissão para realizar esta ação.")
+    
+    else:
+
+        return check_user
     
 @user_routers.delete("/delete-user/{user_id}")
 async def delete_user(user_id: int, user: User = Depends(verify_token), session: Session = Depends(get_session)):
