@@ -17,3 +17,12 @@ class LoginSchema(BaseModel):
 
     class Config():
         from_attributes = True
+
+class ResponseInfoUser(BaseModel):
+
+    id: int
+    name: str
+    email: str
+
+    class Config():
+        from_attributes = True
