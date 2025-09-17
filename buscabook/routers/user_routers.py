@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from buscabook.models import User
-from buscabook.schemas import RegisterSchema, LoginSchema, ResponseInfoUser
+from buscabook.schemas import RegisterSchema, LoginSchema, ResponseInfoUser, UpdateUserSchema
 from buscabook.database import get_session
 from buscabook.dependencies import verify_token
 from sqlalchemy.orm import Session
@@ -84,7 +84,7 @@ async def login(login_schema: LoginSchema , session: Session = Depends(get_sessi
             } 
 
 
-@user_routers.post("/login-form")
+@user_routers.post("/login-form", include_in_schema=False)
 async def login(form_data: OAuth2PasswordRequestForm = Depends() , session: Session = Depends(get_session)):
     """Rota para logar no swagger."""
 
@@ -103,33 +103,35 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends() , session: Sess
 
             } 
 
-@user_routers.get("/info-user/{user_id}", response_model=ResponseInfoUser)
-async def info_user(user_id: int, user: User = Depends(verify_token) ,session: Session = Depends(get_session)):
+@user_routers.get("/info-user", response_model=ResponseInfoUser)
+async def info_user(user: User = Depends(verify_token)):
 
-    check_user = session.query(User).filter(User.id == user_id).first()
+    return user
 
-    if not check_user:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
-    
-    elif check_user.id != user.id:
-        raise HTTPException(status_code=403, detail="Você não tem permissão para realizar esta ação.")
-    
-    else:
 
-        return check_user
+@user_routers.put("/update-user")
+async def update_user(update_schema: UpdateUserSchema, user: User = Depends(verify_token), session: Session = Depends(get_session)):
+
+    if update_schema.name and update_schema.name != "string":
+        user.name = update_schema.name
+
+    if update_schema.email and update_schema.email != "string":
+        user.email = update_schema.email
     
-@user_routers.delete("/delete-user/{user_id}")
-async def delete_user(user_id: int, user: User = Depends(verify_token), session: Session = Depends(get_session)):
+    session.commit()
+
+    return { 
+        "message" : "Alterações concluídas com sucesso",
+        "user": {
+            "id": user.id,
+            "email": user.email
+        }
+    }
+
+
+@user_routers.delete("/delete-user")
+async def delete_user(user: User = Depends(verify_token), session: Session = Depends(get_session)):
     """Rota para deletar um usuário"""
 
-    check_user = session.query(User).filter(User.id == user_id).first()
-
-    if not check_user:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
-
-    elif check_user.id != user.id:
-        raise HTTPException(status_code=403, detail="Você não tem permissão para realizar esta ação.")
-    else:
-
-        session.delete(check_user)
-        session.commit()
+    session.delete(user)
+    session.commit()
