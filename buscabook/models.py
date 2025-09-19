@@ -1,5 +1,6 @@
 from buscabook.database import Base
 from sqlalchemy import Column, Integer, String, Text
+import json
 
 #Tabela dos usuários
 class User(Base):
@@ -9,11 +10,30 @@ class User(Base):
     name = Column("name", String, nullable=False)
     email = Column("email", String, nullable=False, unique=True)
     password = Column("password", String, nullable=False)
+    saved_books = Column("saved_books" ,Text, default="[]")
 
-    def __init__(self, name, email, password):
+    def __init__(self, name, email, password, savade_books):
         self.name = name
         self.email = email
         self.password = password
+        self.saved_books = savade_books
+    
+    def add_book(self, book_id):
+
+        books = json.loads(self.saved_books)
+        if book_id not in books:
+            books.append(book_id)
+        self.saved_books = json.dumps(books)
+
+    def remove_book(self, book_id):
+
+        books = json.loads(self.saved_books)
+        if book_id in books:
+            books.remove(book_id)
+        self.saved_books = json.dumps(books)
+
+    def get_books(self):
+        return json.loads(self.saved_books)
 
 #Tabela dos livros
 class Book(Base):
