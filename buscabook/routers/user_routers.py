@@ -121,9 +121,9 @@ async def update_user(update_schema: UpdateUserSchema, user: User = Depends(veri
     session.commit()
 
     return { 
-        "message" : "Alterações concluídas com sucesso",
         "user": {
             "id": user.id,
+            "name": user.name,
             "email": user.email
         }
     }
