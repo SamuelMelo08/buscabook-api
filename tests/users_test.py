@@ -7,7 +7,7 @@ client = TestClient(app)
 def test_register():
 
     response = client.post(
-        "/user/register",
+        "/auth/register",
         json={
             "name": "example",
             "email": "example@gmail.com",
@@ -22,7 +22,7 @@ def test_register():
 def test_login():
 
     response = client.post(
-        "/user/login",
+        "/auth/login",
         json={
             "email": "example@gmail.com",
             "password": "1234"

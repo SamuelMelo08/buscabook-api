@@ -8,9 +8,11 @@ app = FastAPI(
 
 
 from buscabook.routers.book_routers import book_routers
+from buscabook.routers.auth_routers import auth_routers
 from buscabook.routers.user_routers import user_routers
 
 #Routers
 app.include_router(book_routers)
+app.include_router(auth_routers)
 app.include_router(user_routers)
 
